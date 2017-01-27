@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -28,7 +27,7 @@ var (
 type ExportOptions struct {
 	dir        *string
 	collection *string
-	volumeId   *int
+	volumeId   *string
 }
 
 var cmdExport = &Command{
@@ -45,7 +44,7 @@ func init() {
 	cmdExport.Run = runExport // break init cycle
 	export.dir = cmdExport.Flag.String("dir", ".", "input data directory to store volume data files")
 	export.collection = cmdExport.Flag.String("collection", "", "the volume collection name")
-	export.volumeId = cmdExport.Flag.Int("volumeId", -1, "a volume id. The volume .dat and .idx files should already exist in the dir.")
+	export.volumeId = cmdExport.Flag.String("volumeId", "", "a volume id. The volume .dat and .idx files should already exist in the dir.")
 }
 
 var (
@@ -74,7 +73,7 @@ func runExport(cmd *Command, args []string) bool {
 		newerThanUnix = newerThan.Unix()
 	}
 
-	if *export.volumeId == -1 {
+	if *export.volumeId == "" {
 		return false
 	}
 
@@ -107,11 +106,17 @@ func runExport(cmd *Command, args []string) bool {
 			AccessTime: t, ChangeTime: t}
 	}
 
-	fileName := strconv.Itoa(*export.volumeId)
+	fileName := *export.volumeId
 	if *export.collection != "" {
 		fileName = *export.collection + "_" + fileName
 	}
-	vid := storage.VolumeId(*export.volumeId)
+
+	vid, err := storage.NewVolumeId(*export.volumeId)
+	if err != nil {
+		fmt.Printf("Error parsing volume %s: %v\n", export.volumeId, err)
+		return true
+	}
+
 	indexFile, err := os.OpenFile(path.Join(*export.dir, fileName+".idx"), os.O_RDONLY, 0644)
 	if err != nil {
 		glog.Fatalf("Create Volume Index [ERROR] %s\n", err)

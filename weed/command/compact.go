@@ -3,6 +3,7 @@ package command
 import (
 	"github.com/chrislusf/seaweedfs/weed/glog"
 	"github.com/chrislusf/seaweedfs/weed/storage"
+	"fmt"
 )
 
 func init() {
@@ -22,18 +23,22 @@ var cmdCompact = &Command{
 var (
 	compactVolumePath        = cmdCompact.Flag.String("dir", ".", "data directory to store files")
 	compactVolumeCollection  = cmdCompact.Flag.String("collection", "", "volume collection name")
-	compactVolumeId          = cmdCompact.Flag.Int("volumeId", -1, "a volume id. The volume should already exist in the dir.")
+	compactVolumeId          = cmdCompact.Flag.String("volumeId", "", "a volume id. The volume should already exist in the dir.")
 	compactMethod            = cmdCompact.Flag.Int("method", 0, "option to choose which compact method. use 0 or 1.")
 	compactVolumePreallocate = cmdCompact.Flag.Int64("preallocateMB", 0, "preallocate volume disk space")
 )
 
 func runCompact(cmd *Command, args []string) bool {
-
-	if *compactVolumeId == -1 {
+	if *compactVolumeId == "" {
 		return false
 	}
 
-	vid := storage.VolumeId(*compactVolumeId)
+	vid, err := storage.NewVolumeId(*s.volumeId)
+	if err != nil {
+		fmt.Printf("Error parsing volume %s: %v\n", s.volumeId, err)
+		return true
+	}
+
 	v, err := storage.NewVolume(*compactVolumePath, *compactVolumeCollection, vid,
 		storage.NeedleMapInMemory, nil, nil, *compactVolumePreallocate*(1<<20))
 	if err != nil {

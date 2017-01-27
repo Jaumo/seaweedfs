@@ -8,11 +8,12 @@ import (
 	"github.com/chrislusf/seaweedfs/weed/stats"
 	"github.com/chrislusf/seaweedfs/weed/util"
 	ui "github.com/chrislusf/seaweedfs/weed/server/volume_server_ui"
+	"github.com/dustin/go-humanize"
 )
 
 func (vs *VolumeServer) uiStatusHandler(w http.ResponseWriter, r *http.Request) {
 	infos := make(map[string]interface{})
-	infos["Up Time"] = time.Now().Sub(startTime).String()
+	infos["Up Time"] = humanize.RelTime(time.Now(), startTime, "", "")
 	var ds []*stats.DiskStatus
 	for _, loc := range vs.store.Locations {
 		if dir, e := filepath.Abs(loc.Directory); e == nil {

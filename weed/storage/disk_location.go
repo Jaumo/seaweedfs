@@ -37,7 +37,7 @@ func (l *DiskLocation) volumeIdFromPath(dir os.FileInfo) (VolumeId, string, erro
 		return vol, collection, err
 	}
 
-	return 0, "", fmt.Errorf("Path is not a volume: %s", name)
+	return EmptyVolumeId(), "", fmt.Errorf("Path is not a volume: %s", name)
 }
 
 func (l *DiskLocation) loadExistingVolume(dir os.FileInfo, needleMapKind NeedleMapType, mutex *sync.RWMutex) {

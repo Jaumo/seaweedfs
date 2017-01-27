@@ -190,7 +190,7 @@ func (n *NodeImpl) UpAdjustActiveVolumeCountDelta(activeVolumeCountDelta int) { 
 	}
 }
 func (n *NodeImpl) UpAdjustMaxVolumeId(vid storage.VolumeId) { //can be negative
-	if n.maxVolumeId < vid {
+	if vid.Comparable() && n.maxVolumeId.Less(&vid) {
 		n.maxVolumeId = vid
 		if n.parent != nil {
 			n.parent.UpAdjustMaxVolumeId(vid)

@@ -96,7 +96,7 @@ func (dir *Dir) ReadDir(ctx context.Context) ([]fuse.Dirent, error) {
 	if files, e := filer.ListFiles(*mountOptions.filer, dir.Path, ""); e == nil {
 		for _, f := range files.Files {
 			if fileId, e := storage.ParseFileId(string(f.Id)); e == nil {
-				fileInode := uint64(fileId.VolumeId)<<48 + fileId.Key
+				fileInode := uint64(fileId.VolumeId.Int())<<48 + fileId.Key
 				ret = append(ret, fuse.Dirent{Inode: fileInode, Name: f.Name, Type: fuse.DT_File})
 			}
 

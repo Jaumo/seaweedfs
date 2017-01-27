@@ -66,6 +66,7 @@ var (
 	masterMetaFolder              = cmdServer.Flag.String("master.dir", "", "data directory to store meta data, default to same as -dir specified")
 	masterVolumeSizeLimitMB       = cmdServer.Flag.Uint("master.volumeSizeLimitMB", 30*1000, "Master stops directing writes to oversized volumes.")
 	masterVolumePreallocate       = cmdServer.Flag.Bool("master.volumePreallocate", false, "Preallocate disk space for volumes.")
+	masterVolumeIdVersion         = cmdServer.Flag.Uint("master.volumeIdVersion", 1, "Volume id version used to create new volumes.")
 	masterConfFile                = cmdServer.Flag.String("master.conf", "/etc/weedfs/weedfs.conf", "xml configuration file")
 	masterDefaultReplicaPlacement = cmdServer.Flag.String("master.defaultReplicaPlacement", "000", "Default replication type if not specified.")
 	volumePort                    = cmdServer.Flag.Int("volume.port", 8080, "volume server http listen port")
@@ -209,7 +210,7 @@ func runServer(cmd *Command, args []string) bool {
 	go func() {
 		r := mux.NewRouter()
 		ms := weed_server.NewMasterServer(r, *masterPort, *masterMetaFolder,
-			*masterVolumeSizeLimitMB, *masterVolumePreallocate,
+			*masterVolumeSizeLimitMB, storage.VolumeIdVersion(*masterVolumeIdVersion), *masterVolumePreallocate,
 			*volumePulse, *masterConfFile, *masterDefaultReplicaPlacement, *serverGarbageThreshold,
 			serverWhiteList, *serverSecureKey,
 		)

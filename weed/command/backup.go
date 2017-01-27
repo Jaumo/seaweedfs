@@ -15,7 +15,7 @@ type BackupOptions struct {
 	master     *string
 	collection *string
 	dir        *string
-	volumeId   *int
+	volumeId   *string
 }
 
 func init() {
@@ -23,7 +23,7 @@ func init() {
 	s.master = cmdBackup.Flag.String("server", "localhost:9333", "SeaweedFS master location")
 	s.collection = cmdBackup.Flag.String("collection", "", "collection name")
 	s.dir = cmdBackup.Flag.String("dir", ".", "directory to store volume data files")
-	s.volumeId = cmdBackup.Flag.Int("volumeId", -1, "a volume id. The volume .dat and .idx files should already exist in the dir.")
+	s.volumeId = cmdBackup.Flag.String("volumeId", "", "a volume id. The volume .dat and .idx files should already exist in the dir.")
 }
 
 var cmdBackup = &Command{
@@ -46,32 +46,36 @@ var cmdBackup = &Command{
 }
 
 func runBackup(cmd *Command, args []string) bool {
-	if *s.volumeId == -1 {
+	if *s.volumeId == "" {
 		return false
 	}
-	vid := storage.VolumeId(*s.volumeId)
+	vid, err := storage.NewVolumeId(*s.volumeId)
+	if err != nil {
+		fmt.Printf("Error parsing volume %s: %v\n", s.volumeId, err)
+		return true
+	}
 
 	// find volume location, replication, ttl info
 	lookup, err := operation.Lookup(*s.master, vid.String())
 	if err != nil {
-		fmt.Printf("Error looking up volume %d: %v\n", vid, err)
+		fmt.Printf("Error looking up volume %v: %v\n", vid, err)
 		return true
 	}
 	volumeServer := lookup.Locations[0].Url
 
 	stats, err := operation.GetVolumeSyncStatus(volumeServer, vid.String())
 	if err != nil {
-		fmt.Printf("Error get volume %d status: %v\n", vid, err)
+		fmt.Printf("Error get volume %v status: %v\n", vid, err)
 		return true
 	}
 	ttl, err := storage.ReadTTL(stats.Ttl)
 	if err != nil {
-		fmt.Printf("Error get volume %d ttl %s: %v\n", vid, stats.Ttl, err)
+		fmt.Printf("Error get volume %v ttl %s: %v\n", vid, stats.Ttl, err)
 		return true
 	}
 	replication, err := storage.NewReplicaPlacementFromString(stats.Replication)
 	if err != nil {
-		fmt.Printf("Error get volume %d replication %s : %v\n", vid, stats.Replication, err)
+		fmt.Printf("Error get volume %v replication %s : %v\n", vid, stats.Replication, err)
 		return true
 	}
 
@@ -82,7 +86,7 @@ func runBackup(cmd *Command, args []string) bool {
 	}
 
 	if err := v.Synchronize(volumeServer); err != nil {
-		fmt.Printf("Error synchronizing volume %d: %v\n", vid, err)
+		fmt.Printf("Error synchronizing volume %v: %v\n", vid, err)
 		return true
 	}
 

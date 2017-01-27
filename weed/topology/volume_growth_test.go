@@ -80,7 +80,7 @@ func setup(topologyLayout string) *Topology {
 
 	//need to connect all nodes first before server adding volumes
 	topo, err := NewTopology("weedfs", "/etc/weedfs/weedfs.conf",
-		sequence.NewMemorySequencer(), 32*1024, 5)
+		sequence.NewMemorySequencer(), 32*1024, 1, 5)
 	if err != nil {
 		panic("error: " + err.Error())
 	}
@@ -100,7 +100,7 @@ func setup(topologyLayout string) *Topology {
 				for _, v := range serverMap["volumes"].([]interface{}) {
 					m := v.(map[string]interface{})
 					vi := storage.VolumeInfo{
-						Id:      storage.VolumeId(int64(m["id"].(float64))),
+						Id:      storage.NewVolumeIdV1(uint64(m["id"].(float64))),
 						Size:    uint64(m["size"].(float64)),
 						Version: storage.CurrentVersion}
 					server.AddOrUpdateVolume(vi)

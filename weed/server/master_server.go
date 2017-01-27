@@ -14,6 +14,7 @@ import (
 	"github.com/chrislusf/seaweedfs/weed/topology"
 	"github.com/chrislusf/seaweedfs/weed/util"
 	"github.com/gorilla/mux"
+	"github.com/chrislusf/seaweedfs/weed/storage"
 )
 
 type MasterServer struct {
@@ -22,6 +23,7 @@ type MasterServer struct {
 	volumeSizeLimitMB       uint
 	preallocate             int64
 	pulseSeconds            int
+	volumeIdVersion         storage.VolumeIdVersion
 	defaultReplicaPlacement string
 	garbageThreshold        string
 	guard                   *security.Guard
@@ -35,6 +37,7 @@ type MasterServer struct {
 
 func NewMasterServer(r *mux.Router, port int, metaFolder string,
 	volumeSizeLimitMB uint,
+	volumeIdVersion storage.VolumeIdVersion,
 	preallocate bool,
 	pulseSeconds int,
 	confFile string,
@@ -51,6 +54,7 @@ func NewMasterServer(r *mux.Router, port int, metaFolder string,
 	ms := &MasterServer{
 		port:                    port,
 		volumeSizeLimitMB:       volumeSizeLimitMB,
+		volumeIdVersion:         volumeIdVersion,
 		preallocate:             preallocateSize,
 		pulseSeconds:            pulseSeconds,
 		defaultReplicaPlacement: defaultReplicaPlacement,
@@ -60,7 +64,7 @@ func NewMasterServer(r *mux.Router, port int, metaFolder string,
 	seq := sequence.NewMemorySequencer()
 	var e error
 	if ms.Topo, e = topology.NewTopology("topo", confFile, seq,
-		uint64(volumeSizeLimitMB)*1024*1024, pulseSeconds); e != nil {
+		uint64(volumeSizeLimitMB)*1024*1024, volumeIdVersion, pulseSeconds); e != nil {
 		glog.Fatalf("cannot create topology:%s", e)
 	}
 	ms.vg = topology.NewDefaultVolumeGrowth()

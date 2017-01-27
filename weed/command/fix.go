@@ -3,10 +3,10 @@ package command
 import (
 	"os"
 	"path"
-	"strconv"
 
 	"github.com/chrislusf/seaweedfs/weed/glog"
 	"github.com/chrislusf/seaweedfs/weed/storage"
+	"fmt"
 )
 
 func init() {
@@ -24,16 +24,21 @@ var cmdFix = &Command{
 var (
 	fixVolumePath       = cmdFix.Flag.String("dir", ".", "data directory to store files")
 	fixVolumeCollection = cmdFix.Flag.String("collection", "", "the volume collection name")
-	fixVolumeId         = cmdFix.Flag.Int("volumeId", -1, "a volume id. The volume should already exist in the dir. The volume index file should not exist.")
+	fixVolumeId         = cmdFix.Flag.String("volumeId", "", "a volume id. The volume should already exist in the dir. The volume index file should not exist.")
 )
 
 func runFix(cmd *Command, args []string) bool {
-
-	if *fixVolumeId == -1 {
+	if *fixVolumeId == "" {
 		return false
 	}
 
-	fileName := strconv.Itoa(*fixVolumeId)
+	vid, err := storage.NewVolumeId(*fixVolumeId)
+	if err != nil {
+		fmt.Printf("Error parsing volume %s: %v\n", fixVolumeId, err)
+		return true
+	}
+
+	fileName := *fixVolumeId
 	if *fixVolumeCollection != "" {
 		fileName = *fixVolumeCollection + "_" + fileName
 	}
@@ -46,7 +51,6 @@ func runFix(cmd *Command, args []string) bool {
 	nm := storage.NewNeedleMap(indexFile)
 	defer nm.Close()
 
-	vid := storage.VolumeId(*fixVolumeId)
 	err = storage.ScanVolumeFile(*fixVolumePath, *fixVolumeCollection, vid,
 		storage.NeedleMapInMemory,
 		func(superBlock storage.SuperBlock) error {

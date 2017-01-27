@@ -73,13 +73,13 @@ func (vs *VolumeServer) getVolumeId(volumeParameterName string, r *http.Request)
 
 	if volumeIdString == "" {
 		err := fmt.Errorf("Empty Volume Id: Need to pass in %s=the_volume_id.", volumeParameterName)
-		return 0, err
+		return storage.EmptyVolumeId(), err
 	}
 
 	vid, err := storage.NewVolumeId(volumeIdString)
 	if err != nil {
 		err = fmt.Errorf("Volume Id %s is not a valid unsigned integer", volumeIdString)
-		return 0, err
+		return storage.EmptyVolumeId(), err
 	}
 
 	return vid, err

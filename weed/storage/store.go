@@ -109,10 +109,11 @@ func (s *Store) AddVolume(volumeListString string, collection string, needleMapK
 			id_string := range_string
 			id, err := NewVolumeId(id_string)
 			if err != nil {
-				return fmt.Errorf("Volume Id %s is not a valid unsigned integer!", id_string)
+				return fmt.Errorf("Invalid format for Volume Id %s!", id_string)
 			}
-			e = s.addVolume(VolumeId(id), collection, needleMapKind, rt, ttl, preallocate)
+			e = s.addVolume(id, collection, needleMapKind, rt, ttl, preallocate)
 		} else {
+			// Ranges are only supported for v1 volume ids
 			pair := strings.Split(range_string, "-")
 			start, start_err := strconv.ParseUint(pair[0], 10, 64)
 			if start_err != nil {
@@ -123,7 +124,7 @@ func (s *Store) AddVolume(volumeListString string, collection string, needleMapK
 				return fmt.Errorf("Volume End Id %s is not a valid unsigned integer!", pair[1])
 			}
 			for id := start; id <= end; id++ {
-				if err := s.addVolume(VolumeId(id), collection, needleMapKind, rt, ttl, preallocate); err != nil {
+				if err := s.addVolume(NewVolumeIdV1(id), collection, needleMapKind, rt, ttl, preallocate); err != nil {
 					e = err
 				}
 			}
@@ -215,13 +216,13 @@ func (s *Store) CollectHeartbeat() *pb.Heartbeat {
 	for _, location := range s.Locations {
 		maxVolumeCount = maxVolumeCount + location.MaxVolumeCount
 		location.Lock()
-		for k, v := range location.volumes {
+		for _, v := range location.volumes {
 			if maxFileKey < v.nm.MaxFileKey() {
 				maxFileKey = v.nm.MaxFileKey()
 			}
 			if !v.expired(s.VolumeSizeLimit) {
 				volumeMessage := &pb.VolumeInformationMessage{
-					Id:               uint32(k),
+					Id:               v.Id.String(),
 					Size:             uint64(v.Size()),
 					Collection:       v.Collection,
 					FileCount:        uint64(v.nm.FileCount()),

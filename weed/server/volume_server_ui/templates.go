@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"strconv"
 	"strings"
+	"github.com/chrislusf/seaweedfs/weed/storage"
+	"github.com/dustin/go-humanize"
 )
 
 func join(data []int64) string {
@@ -14,8 +16,23 @@ func join(data []int64) string {
 	return strings.Join(ret, ",")
 }
 
+func volumeId(volumeId storage.VolumeId) string {
+	return volumeId.String()
+}
+
+func bytes(bytes uint64) string {
+	return humanize.Bytes(bytes)
+}
+
+func number(number int) string {
+	return humanize.Comma(int64(number))
+}
+
 var funcMap = template.FuncMap{
 	"join": join,
+	"volumeId": volumeId,
+	"bytes": bytes,
+	"number": number,
 }
 
 var StatusTpl = template.Must(template.New("status").Funcs(funcMap).Parse(`<!DOCTYPE html>
@@ -62,7 +79,7 @@ var StatusTpl = template.Must(template.New("status").Funcs(funcMap).Parse(`<!DOC
           {{ range .DiskStatuses }}
             <tr>
               <th>{{ .Dir }}</th>
-              <td>{{ .Free }} Bytes Free</td>
+              <td>{{ .Free | bytes }} Free</td>
             </tr>
           {{ end }}
           </table>
@@ -117,11 +134,11 @@ var StatusTpl = template.Must(template.New("status").Funcs(funcMap).Parse(`<!DOC
           <tbody>
           {{ range .Volumes }}
             <tr>
-              <td><code>{{ .Id }}</code></td>
+              <td><code>{{ .Id | volumeId }}</code></td>
               <td>{{ .Collection }}</td>
-              <td>{{ .Size }} Bytes</td>
+              <td>{{ .Size | bytes }}</td>
               <td>{{ .FileCount }}</td>
-              <td>{{ .DeleteCount }} / {{.DeletedByteCount}} Bytes</td>
+              <td>{{ .DeleteCount }} / {{.DeletedByteCount | bytes}}</td>
               <td>{{ .Ttl }}</td>
             </tr>
           {{ end }}

@@ -28,7 +28,7 @@ message HeartbeatResponse {
 }
 
 message VolumeInformationMessage {
-  uint32 id = 1;
+  string id = 1;
   uint64 size = 2;
   string collection = 3;
   uint64 file_count = 4;

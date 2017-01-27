@@ -21,8 +21,9 @@ type VolumeInfo struct {
 }
 
 func NewVolumeInfo(m *pb.VolumeInformationMessage) (vi VolumeInfo, err error) {
+	volumeId, err := NewVolumeId(m.Id)
 	vi = VolumeInfo{
-		Id:               VolumeId(m.Id),
+		Id:               volumeId,
 		Size:             m.Size,
 		Collection:       m.Collection,
 		FileCount:        int(m.FileCount),
@@ -31,6 +32,11 @@ func NewVolumeInfo(m *pb.VolumeInformationMessage) (vi VolumeInfo, err error) {
 		ReadOnly:         m.ReadOnly,
 		Version:          Version(m.Version),
 	}
+
+	if err != nil {
+		return vi, err
+	}
+
 	rp, e := NewReplicaPlacementFromByte(byte(m.ReplicaPlacement))
 	if e != nil {
 		return vi, e
@@ -54,7 +60,7 @@ func (vis volumeInfos) Len() int {
 }
 
 func (vis volumeInfos) Less(i, j int) bool {
-	return vis[i].Id < vis[j].Id
+	return vis[i].Id.Less(&vis[j].Id)
 }
 
 func (vis volumeInfos) Swap(i, j int) {

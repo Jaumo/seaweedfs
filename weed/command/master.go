@@ -17,6 +17,7 @@ import (
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"github.com/chrislusf/seaweedfs/weed/storage"
 )
 
 func init() {
@@ -40,6 +41,7 @@ var (
 	masterPeers             = cmdMaster.Flag.String("peers", "", "other master nodes in comma separated ip:port list, example: 127.0.0.1:9093,127.0.0.1:9094")
 	volumeSizeLimitMB       = cmdMaster.Flag.Uint("volumeSizeLimitMB", 30*1000, "Master stops directing writes to oversized volumes.")
 	volumePreallocate       = cmdMaster.Flag.Bool("volumePreallocate", false, "Preallocate disk space for volumes.")
+	volumeIdVersion         = cmdMaster.Flag.Uint("volumeIdVersion", 1, "Volume id version used to create new volumes.")
 	mpulse                  = cmdMaster.Flag.Int("pulseSeconds", 5, "number of seconds between heartbeats")
 	confFile                = cmdMaster.Flag.String("conf", "/etc/weedfs/weedfs.conf", "Deprecating! xml configuration file")
 	defaultReplicaPlacement = cmdMaster.Flag.String("defaultReplication", "000", "Default replication type if not specified.")
@@ -78,7 +80,7 @@ func runMaster(cmd *Command, args []string) bool {
 
 	r := mux.NewRouter()
 	ms := weed_server.NewMasterServer(r, *mport, *metaFolder,
-		*volumeSizeLimitMB, *volumePreallocate,
+		*volumeSizeLimitMB, storage.VolumeIdVersion(*volumeIdVersion), *volumePreallocate,
 		*mpulse, *confFile, *defaultReplicaPlacement, *garbageThreshold,
 		masterWhiteList, *masterSecureKey,
 	)

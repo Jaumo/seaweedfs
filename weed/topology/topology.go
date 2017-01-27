@@ -21,6 +21,8 @@ type Topology struct {
 
 	volumeSizeLimit uint64
 
+	volumeIdVersion storage.VolumeIdVersion
+
 	Sequence sequence.Sequencer
 
 	chanFullVolumes chan storage.VolumeInfo
@@ -30,7 +32,7 @@ type Topology struct {
 	RaftServer raft.Server
 }
 
-func NewTopology(id string, confFile string, seq sequence.Sequencer, volumeSizeLimit uint64, pulse int) (*Topology, error) {
+func NewTopology(id string, confFile string, seq sequence.Sequencer, volumeSizeLimit uint64, volumeIdVersion storage.VolumeIdVersion, pulse int) (*Topology, error) {
 	t := &Topology{}
 	t.id = NodeId(id)
 	t.nodeType = "Topology"
@@ -39,6 +41,7 @@ func NewTopology(id string, confFile string, seq sequence.Sequencer, volumeSizeL
 	t.collectionMap = util.NewConcurrentReadMap()
 	t.pulse = int64(pulse)
 	t.volumeSizeLimit = volumeSizeLimit
+	t.volumeIdVersion = volumeIdVersion
 
 	t.Sequence = seq
 
@@ -99,6 +102,12 @@ func (t *Topology) Lookup(collection string, vid storage.VolumeId) []*DataNode {
 }
 
 func (t *Topology) NextVolumeId() storage.VolumeId {
+	switch t.volumeIdVersion {
+	case 2:
+		// No announcement needed, v2 is globally unique
+		vid := storage.VolumeId{Version: 2}
+		return vid.Next()
+	}
 	vid := t.GetMaxVolumeId()
 	next := vid.Next()
 	go t.RaftServer.Do(NewMaxVolumeIdCommand(next))
